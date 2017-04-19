@@ -16,14 +16,17 @@ apply plugin: 'java'
 apply plugin: 'maven'
 apply plugin: 'org.springframework.boot'
 
+def appengineVersion = '1.9.42'
 dependencies {
   compile fileTree(dir: 'libs', include: ['*.jar'])
 
-  compile 'com.google.appengine:appengine-api-1.0-sdk:1.9.42'
+  compile 'com.google.appengine:appengine-api-1.0-sdk:' + appengineVersion
+  compile 'com.google.appengine:appengine-api-labs:' + appengineVersion
   compile 'javax.servlet:servlet-api:2.5'
   compile 'org.springframework.boot:spring-boot-starter-thymeleaf'
   compile 'org.springframework.social:spring-social-facebook'
   compile 'com.googlecode.objectify:objectify:5.1.12'
+  compile 'org.apache.commons:commons-lang3:3.5'
 }
 
 sourceCompatibility = "1.7"
