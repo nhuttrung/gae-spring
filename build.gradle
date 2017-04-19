@@ -1,0 +1,62 @@
+buildscript {
+  repositories {
+    jcenter()
+  }
+  dependencies {
+    classpath("org.springframework.boot:spring-boot-gradle-plugin:1.5.2.RELEASE")
+  }
+}
+
+repositories {
+  jcenter();
+  mavenLocal();
+}
+
+apply plugin: 'java'
+apply plugin: 'maven'
+apply plugin: 'org.springframework.boot'
+
+dependencies {
+  compile fileTree(dir: 'libs', include: ['*.jar'])
+
+  compile 'com.google.appengine:appengine-api-1.0-sdk:1.9.42'
+  compile 'javax.servlet:servlet-api:2.5'
+  compile 'org.springframework.boot:spring-boot-starter-thymeleaf'
+  compile 'org.springframework.social:spring-social-facebook'
+  compile 'com.googlecode.objectify:objectify:5.1.12'
+}
+
+sourceCompatibility = "1.7"
+targetCompatibility = "1.7"
+
+group = 'vn.khtt'
+version = '1.0.0'
+
+// jar {
+//  from sourceSets.main.allSource
+// }
+
+
+task sourcesJar(type: Jar) {
+  classifier = 'sources'
+  from sourceSets.main.allSource
+}
+task javadocJar(type: Jar) {
+  classifier = 'javadoc'
+  from javadoc
+}   
+
+artifacts {
+  archives sourcesJar
+  archives javadocJar
+}
+
+/*
+uploadArchives {
+  repositories {
+    mavenDeployer {
+      repository(url: "file://C:/Users/nhuttrung/.m2/repository")
+    }
+  }
+}
+*/
