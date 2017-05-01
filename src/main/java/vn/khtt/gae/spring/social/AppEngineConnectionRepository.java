@@ -182,7 +182,8 @@ public class AppEngineConnectionRepository implements ConnectionRepository {
     
     UserConnection userConnection = new UserConnection(connection);
     UserProfile userProfile = new UserProfile(connection);
-    ofy().save().entities(userConnection, userProfile).now();
+//    ofy().save().entities(userConnection, userProfile).now();
+    ofy().save().entity(userConnection).now();
   }
 
   private Connection toConnection(UserConnection userConnection){

@@ -37,6 +37,9 @@ public class UserProfile {
 
   private String username;
 
+  private UserProfile(){
+  }
+  
   public UserProfile(Connection connection) {
     ConnectionData data = connection.createData();
     org.springframework.social.connect.UserProfile profile = connection.fetchUserProfile();
@@ -54,5 +57,13 @@ public class UserProfile {
     this.lastName = profile.getLastName();
     this.email = profile.getEmail();
     this.username = profile.getUsername();
+  }
+  
+  public String getDisplayName(){
+    return displayName;
+  }
+
+  public String getName(){
+    return name;
   }
 }
