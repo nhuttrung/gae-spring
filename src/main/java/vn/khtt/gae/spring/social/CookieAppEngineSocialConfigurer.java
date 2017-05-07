@@ -1,6 +1,9 @@
 package vn.khtt.gae.spring.social;
 
 import com.googlecode.objectify.Key;
+import com.googlecode.objectify.ObjectifyService;
+import com.googlecode.objectify.annotation.Entity;
+import com.googlecode.objectify.annotation.Id;
 
 import org.springframework.social.UserIdSource;
 import org.springframework.social.config.annotation.SocialConfiguration;
@@ -50,14 +53,35 @@ public class CookieAppEngineSocialConfigurer extends AppEngineSocialConfigurer {
         }
     }
 
+    @Entity
+    private static class AllocId {
+        static {
+            ObjectifyService.register(AllocId.class);
+        }
+
+        @Id
+        private Long id;
+
+        public Long getId(){
+            return id;
+        }
+    }
     private static class CookieConnectionSignUp implements ConnectionSignUp {
         @Override
         public String execute(Connection<?> connection) {
-            HttpServletResponse response = Utils.getCurrentResponse();
-            Key<UserConnection> key = ofy().factory().allocateId(UserConnection.class);
-            String userId = "" + key.getId();
-//            Random random = new Random();
-//            String userId = "" + Math.abs(random.nextLong());
+            // 1.
+            // Key<UserConnection> key = ofy().factory().allocateId(UserConnection.class);
+            // String userId = "" + key.getId();
+
+            // 2.
+            Random random = new Random();
+            String userId = "" + Math.abs(random.nextLong());
+
+            // 3.
+            // AllocId allocId = new AllocId();
+            // ofy().save().entity(allocId).now();
+            // ofy().delete().entity(allocId);
+            // String userId = "" + allocId.getId();
 
             return userId;
         }
