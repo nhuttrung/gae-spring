@@ -2,6 +2,9 @@ package vn.khtt.gae.spring.social;
 
 import com.googlecode.objectify.Key;
 import static com.googlecode.objectify.ObjectifyService.ofy;
+
+import com.googlecode.objectify.ObjectifyService;
+import com.googlecode.objectify.cmd.Query;
 import com.googlecode.objectify.cmd.QueryKeys;
 
 import java.util.ArrayList;
@@ -20,18 +23,33 @@ import org.springframework.social.connect.UsersConnectionRepository;
 public class AppEngineUsersConnectionRepository implements UsersConnectionRepository {
   private final ConnectionFactoryLocator connectionFactoryLocator;
   private ConnectionSignUp connectionSignUp;
-  private UserIdUpdater userIdUpdater;
+
+  private final List<ConnectionInterceptor<?>> interceptors = new ArrayList<ConnectionInterceptor<?>>();
   
   public AppEngineUsersConnectionRepository(ConnectionFactoryLocator connectionFactoryLocator) {
     this.connectionFactoryLocator = connectionFactoryLocator;
+
+    ObjectifyService.register(UserConnection.class);
   }
 
   public void setConnectionSignUp(ConnectionSignUp connectionSignUp) {
     this.connectionSignUp = connectionSignUp;
   }
 
-  public void setUserIdUpdater(UserIdUpdater userIdUpdater) {
-    this.userIdUpdater = userIdUpdater;
+  /**
+   * Configure the list of interceptors that should receive callbacks during the connection CRUD operations.
+   * @param interceptors the connect interceptors to add
+   */
+  public void setInterceptors(List<ConnectionInterceptor<?>> interceptors) {
+    this.interceptors.addAll(interceptors);
+  }
+
+  /**
+   * Adds a ConnectionInterceptor to receive callbacks during the connection CRUD operations.
+   * @param interceptor the connection interceptor to add
+   */
+  public void addInterceptor(ConnectionInterceptor<?> interceptor) {
+    interceptors.add(interceptor);
   }
 
   @Override
@@ -39,13 +57,13 @@ public class AppEngineUsersConnectionRepository implements UsersConnectionReposi
     List<String> result = new ArrayList<String>();
     
     ConnectionKey key = connection.getKey();
-    QueryKeys<UserConnection> keys = ofy().load().type(UserConnection.class)
-      .filter("providerId", key.getProviderId())
-      .filter("providerUserId", key.getProviderUserId()).keys();
-    for (Key k : keys){
-      result.add(k.getName());
+    Query<UserConnection> query = ofy().load().type(UserConnection.class)
+            .filter("providerId", key.getProviderId())
+            .filter("providerUserId", key.getProviderUserId());
+    for (UserConnection conn : query){
+      result.add(conn.getUserId());
     }
-    
+
     if (result.size() == 0 && connectionSignUp != null){
       String newUserId = connectionSignUp.execute(connection);
       if (newUserId != null){
@@ -73,8 +91,12 @@ public class AppEngineUsersConnectionRepository implements UsersConnectionReposi
 
   @Override
   public ConnectionRepository createConnectionRepository(String userId) {
+    if (userId == null){
+//      throw new IllegalArgumentException("userId cannot be null");
+    }
+
     AppEngineConnectionRepository repository = new AppEngineConnectionRepository(connectionFactoryLocator, userId);
-    repository.setUserIdUpdater(userIdUpdater);
+    repository.setInterceptors(interceptors);
     return repository;
   }
 }

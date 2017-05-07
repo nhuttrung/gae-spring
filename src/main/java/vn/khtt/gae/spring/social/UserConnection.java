@@ -7,14 +7,16 @@ import com.googlecode.objectify.annotation.Index;
 import org.springframework.social.connect.Connection;
 import org.springframework.social.connect.ConnectionData;
 
+import java.io.Serializable;
+
 /**
  * Persistent for ConnectionData
  */
 @Entity
-public class UserConnection {
+public class UserConnection implements Serializable {
   @Id
-  private String id;
-  
+  private Long id;
+
   @Index
   private String userId;
   
@@ -35,37 +37,36 @@ public class UserConnection {
   private String secret;
   
   private String refreshToken;
-  
+
+  @Index
   private Long expireTime;
 
   private UserConnection() {
   }
-  public UserConnection(Connection connection) {
-    this(Utils.getUserId(connection), connection.createData());
-  }
-  private UserConnection(String userId, ConnectionData data) {
-    this(userId, data.getProviderId(), data.getProviderUserId(), data.getDisplayName(), 
-         data.getProfileUrl(), data.getImageUrl(), data.getAccessToken(), 
-         data.getSecret(), data.getRefreshToken(), data.getExpireTime());
-  }
-  private UserConnection(String userId, String providerId, String providerUserId, String displayName, String profileUrl, String imageUrl, String accessToken, String secret, String refreshToken, Long expireTime) {
-//    StringBuilder sb = new StringBuilder(providerId).append("-").append(providerUserId);
-//    this.id = sb.toString();
-    this.id = providerId + "-" + providerUserId;
-    this.userId = userId;
 
-    this.providerId = providerId;
-    this.providerUserId = providerUserId;
-    this.displayName = displayName;
-    this.profileUrl = profileUrl;
-    this.imageUrl = imageUrl;
-    this.accessToken = accessToken;
-    this.secret = secret;
-    this.refreshToken = refreshToken;
-    this.expireTime = expireTime;
+  public UserConnection(String userId, Connection connection) {
+    this.userId = userId;
+    setConnectionData(connection.createData());
   }
-  
+
+  public void setConnectionData(ConnectionData data) {
+    this.providerId = data.getProviderId();
+    this.providerUserId = data.getProviderUserId();
+    this.displayName = data.getDisplayName();
+    this.profileUrl = data.getProfileUrl();
+    this.imageUrl = data.getImageUrl();
+    this.accessToken = data.getAccessToken();
+    this.secret = data.getSecret();
+    this.refreshToken = data.getRefreshToken();
+    this.expireTime = data.getExpireTime();
+  }
+
   public ConnectionData getConnectionData(){
     return new ConnectionData(providerId, providerUserId, displayName, profileUrl, imageUrl, accessToken, secret, refreshToken, expireTime);
   }
+
+  public String getUserId() {
+    return userId;
+  }
+
 }

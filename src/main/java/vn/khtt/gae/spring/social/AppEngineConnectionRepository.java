@@ -10,6 +10,7 @@ import java.util.List;
 
 import java.util.Set;
 
+import org.springframework.core.GenericTypeResolver;
 import org.springframework.social.connect.Connection;
 import org.springframework.social.connect.ConnectionData;
 import org.springframework.social.connect.ConnectionFactory;
@@ -24,15 +25,30 @@ import org.springframework.util.MultiValueMap;
 public class AppEngineConnectionRepository implements ConnectionRepository {
   private final ConnectionFactoryLocator connectionFactoryLocator;
   private String userId;
-  private UserIdUpdater userIdUpdater;
+  private final MultiValueMap<Class<?>, ConnectionInterceptor<?>> interceptors = new LinkedMultiValueMap<Class<?>, ConnectionInterceptor<?>>();
   
   public AppEngineConnectionRepository(ConnectionFactoryLocator connectionFactoryLocator, String userId) {
     this.connectionFactoryLocator = connectionFactoryLocator;
     this.userId = userId;
   }
 
-  public void setUserIdUpdater(UserIdUpdater userIdUpdater) {
-    this.userIdUpdater = userIdUpdater;
+  /**
+   * Configure the list of interceptors that should receive callbacks during the connection CRUD operations.
+   * @param interceptors the connect interceptors to add
+   */
+  public void setInterceptors(List<ConnectionInterceptor<?>> interceptors) {
+    for (ConnectionInterceptor<?> interceptor : interceptors) {
+      addInterceptor(interceptor);
+    }
+  }
+
+  /**
+   * Adds a ConnectionInterceptor to receive callbacks during the connection CRUD operations.
+   * @param interceptor the connection interceptor to add
+   */
+  public void addInterceptor(ConnectionInterceptor<?> interceptor) {
+    Class<?> serviceApiType = GenericTypeResolver.resolveTypeArgument(interceptor.getClass(), ConnectionInterceptor.class);
+    interceptors.add(serviceApiType, interceptor);
   }
 
   @Override
@@ -132,12 +148,28 @@ public class AppEngineConnectionRepository implements ConnectionRepository {
 
   @Override
   public void addConnection(Connection<?> connection) {
+    for (ConnectionInterceptor interceptor : interceptingConnectionsTo(connection)) {
+      interceptor.beforeCreate(userId, connection);
+    }
+
     saveConnection(connection);
+
+    for (ConnectionInterceptor interceptor : interceptingConnectionsTo(connection)) {
+      interceptor.afterCreate(userId, connection);
+    }
   }
 
   @Override
   public void updateConnection(Connection<?> connection) {
+    for (ConnectionInterceptor interceptor : interceptingConnectionsTo(connection)) {
+      interceptor.beforeUpdate(userId, connection);
+    }
+
     saveConnection(connection);
+
+    for (ConnectionInterceptor interceptor : interceptingConnectionsTo(connection)) {
+      interceptor.afterUpdate(userId, connection);
+    }
   }
 
   @Override
@@ -165,30 +197,47 @@ public class AppEngineConnectionRepository implements ConnectionRepository {
       .filter("userId", userId).filter("providerId", providerId).list();
     
     if (userConnections.size() > 0){
-      return toConnection(userConnections.get(0));
+      Connection<?> connection = toConnection(userConnections.get(0));
+      return connection;
     }
 
     return null;
   }
   
   private void saveConnection(Connection<?> connection) {
-    if (userIdUpdater != null){
-      userIdUpdater.updateUserId(connection);
+    if (userId == null){
+      System.out.println("WARN: userId == null");
+      return;
     }
-//    userId = Utils.getUserId(connection);
-//    if (userId == null){
-//      return;
-//    }
-    
-    UserConnection userConnection = new UserConnection(connection);
-    UserProfile userProfile = new UserProfile(connection);
-//    ofy().save().entities(userConnection, userProfile).now();
-    ofy().save().entity(userConnection).now();
+
+    ConnectionData connectionData = connection.createData();
+    List<UserConnection> userConnections = ofy().load().type(UserConnection.class)
+            .filter("userId", userId)
+            .filter("providerId", connectionData.getProviderId())
+            .filter("providerUserId", connectionData.getProviderUserId()).list();
+    if (userConnections.size() == 0){
+      UserConnection userConnection = new UserConnection(userId, connection);
+      ofy().save().entity(userConnection).now();
+    }else {
+      for (UserConnection userConnection : userConnections){
+        userConnection.setConnectionData(connectionData);
+        ofy().save().entities(userConnections).now();
+      }
+    }
   }
 
   private Connection toConnection(UserConnection userConnection){
     ConnectionData connectionData = userConnection.getConnectionData();
     ConnectionFactory<?> connectionFactory = connectionFactoryLocator.getConnectionFactory(connectionData.getProviderId());
     return connectionFactory.createConnection(connectionData);
+  }
+
+  private List<ConnectionInterceptor<?>> interceptingConnectionsTo(Connection<?> connection) {
+    Class<?> serviceType = GenericTypeResolver.resolveTypeArgument(connection.getClass(), Connection.class);
+    List<ConnectionInterceptor<?>> typedInterceptors = interceptors.get(serviceType);
+    if (typedInterceptors == null) {
+      typedInterceptors = Collections.emptyList();
+    }
+    return typedInterceptors;
   }
 }

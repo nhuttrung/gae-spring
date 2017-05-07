@@ -12,12 +12,12 @@ import org.springframework.context.i18n.LocaleContextHolder;
  * Util class for holding Spring's ApplicationContext
  * How to use:
  * <pre>
- *   @Configuration
+ *   &#064;Configuration
  *   public class WebConfig {
- *     @Bean
+ *     &#064;Bean
  *     public ApplicationContextHolder applicationContextHolder(){
  *       return new ApplicationContextHolder();
- *     }
+ *     }w
  *   }
  * </pre>
  */

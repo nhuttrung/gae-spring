@@ -17,32 +17,16 @@ package vn.khtt.gae.spring.social;
 
 import com.googlecode.objectify.ObjectifyService;
 
-import org.springframework.social.UserIdSource;
-import org.springframework.social.config.annotation.SocialConfiguration;
-import org.springframework.social.config.annotation.SocialConfigurer;
 import org.springframework.social.config.annotation.SocialConfigurerAdapter;
 import org.springframework.social.connect.ConnectionFactoryLocator;
-import org.springframework.social.connect.UsersConnectionRepository;
 
-/**
- * Default implementation of {@link SocialConfigurer} for AppEngine
- * @see SocialConfiguration#usersConnectionRepository
- */
 public class AppEngineSocialConfigurer extends SocialConfigurerAdapter {
-  public AppEngineSocialConfigurer() {
-    ObjectifyService.register(UserConnection.class);
-    ObjectifyService.register(UserProfile.class);
-  }
-  
-  public UserIdSource getUserIdSource() {
-    return new SessionUserIdHandler();
-  }
+    public AppEngineSocialConfigurer() {
+        ObjectifyService.register(UserConnection.class);
+    }
 
-  @Override
-  public UsersConnectionRepository getUsersConnectionRepository(ConnectionFactoryLocator connectionFactoryLocator) {
-    AppEngineUsersConnectionRepository repository = new AppEngineUsersConnectionRepository(connectionFactoryLocator);
-    repository.setConnectionSignUp(new ProviderUserIdConnectionSignUp());
-    repository.setUserIdUpdater(new SessionUserIdHandler());
-    return repository;
-  }
+    @Override
+    public AppEngineUsersConnectionRepository getUsersConnectionRepository(ConnectionFactoryLocator connectionFactoryLocator) {
+        return new AppEngineUsersConnectionRepository(connectionFactoryLocator);
+    }
 }

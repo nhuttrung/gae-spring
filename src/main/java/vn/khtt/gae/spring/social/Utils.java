@@ -1,6 +1,7 @@
 package vn.khtt.gae.spring.social;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.social.connect.Connection;
 import org.springframework.social.connect.ConnectionKey;
@@ -8,7 +9,7 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 public class Utils {
-  /**
+  /*
    * The userId is combined of providerId and providerUserId, 
    * e.g userId = providerId + "-" + providerUserId
    * @param connection
@@ -17,7 +18,7 @@ public class Utils {
   public static String getUserId(Connection<?> connection){
     ConnectionKey key = connection.getKey();
     String userId = key.getProviderId() + "-" + key.getProviderUserId();
-    
+
     return userId;
   }
 
@@ -26,6 +27,13 @@ public class Utils {
     HttpServletRequest request = sra.getRequest();
 
     return request;
+  }
+
+  public static HttpServletResponse getCurrentResponse(){
+    ServletRequestAttributes sra = (ServletRequestAttributes)RequestContextHolder.getRequestAttributes();
+    HttpServletResponse response = sra.getResponse();
+
+    return response;
   }
 
   public static void notImplemented(){

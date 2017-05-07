@@ -14,9 +14,9 @@ import org.springframework.context.support.ResourceBundleMessageSource;
  * How to use:
  * In your @Configuration:
  * <pre>
- * @Configuration
+ * &#064;Configuration
  * public class WebConfig {
- *   @Bean
+ *   &#064;Bean
  *   public MessageSource messageSource(){
  *     return new AppEngineResourceBundleMessageSource();
  *   }
